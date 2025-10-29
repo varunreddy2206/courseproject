@@ -1,0 +1,16 @@
+# --- Python / Flask ---
+__pycache__/
+ngscourse/
+.env
+
+# --- Node / Next.js ---
+nextjsnew/node_modules/
+.next/
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
+
+# --- System files ---
+.DS_Store
+Thumbs.db

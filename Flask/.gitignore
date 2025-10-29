@@ -1,0 +1,44 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Virtual Environment ---
+ngscourse/
+venv/
+env/
+*.env/
+Scripts/
+Include/
+Lib/
+pyvenv.cfg
+
+# --- Environment Variables ---
+.env
+.env.local
+.env.production
+.env.development
+
+# --- IDE / System Files ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Logs / Temp ---
+*.log
+instance/
+*.sqlite3
+
+# --- Flask specific ---
+__pycache__/
+*.db
+*.sqlite
+.mypy_cache/
+.pytest_cache/
+
+# --- Deployment ---
+build/
+dist/
+*.egg-info/
