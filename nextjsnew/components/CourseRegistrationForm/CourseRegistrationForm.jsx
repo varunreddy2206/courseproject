@@ -33,25 +33,27 @@ export default function CourseRegistrationForm() {
 
   // ✅ Load student data and selected course from localStorage
   useEffect(() => {
-  const savedStudent = localStorage.getItem("studentInfo");
-  const selectedCourse = localStorage.getItem("selectedCourse");
+    const savedStudent = localStorage.getItem("studentInfo");
+    const selectedCourse = localStorage.getItem("selectedCourse");
 
-  if (!savedStudent) {
-    alert("Please complete the student registration form first!");
-    router.push("/registrationform");
-    return;
-  }
+    // ⚠️ If no student data found, redirect back to registration
+    if (!savedStudent) {
+      alert("Please complete the registration form first!");
+      router.push("/registrationform");
+      return;
+    }
 
-  const student = JSON.parse(savedStudent);
-  setStudentInfo(student);
+    const student = JSON.parse(savedStudent);
+    setStudentInfo(student);
 
-  // ✅ Priority: use the course chosen in registration form first
-  if (student.course) {
-    setCourse(student.course);
-  } else if (selectedCourse) {
-    setCourse(selectedCourse);
-  }
-}, [router]);
+    // ✅ Always prefer the course from student info (first priority)
+    const courseFromStudent = student?.course || selectedCourse || "";
+    setCourse(courseFromStudent);
+
+    // 🧩 Keep both synced in localStorage (optional but safe)
+    localStorage.setItem("selectedCourse", courseFromStudent);
+  }, [router]);
+
 
 
 
@@ -235,14 +237,21 @@ export default function CourseRegistrationForm() {
 
             <div>
               <label className="block mb-1 font-medium">Mode <span className="text-red-500">*</span></label>
-              <div className="flex gap-6 mt-2">
+              <div className="flex flex-wrap gap-4 mt-2">
                 {["Online", "Offline", "Hybrid"].map((option) => (
-                  <label key={option} className="flex items-center gap-2">
-                    <input type="radio" name="mode" value={option} checked={mode === option} onChange={(e) => setMode(e.target.value)} />
+                  <label key={option} className="flex items-center gap-2 bg-[#000617] px-3 py-1 rounded-md border border-gray-600 text-sm sm:text-base">
+                    <input
+                      type="radio"
+                      name="mode"
+                      value={option}
+                      checked={mode === option}
+                      onChange={(e) => setMode(e.target.value)}
+                    />
                     {option}
                   </label>
                 ))}
               </div>
+
               {errors.mode && <p className="text-red-500 text-sm">{errors.mode}</p>}
             </div>
 
