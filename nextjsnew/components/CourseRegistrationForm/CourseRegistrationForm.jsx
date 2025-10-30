@@ -14,29 +14,26 @@ export default function CourseRegistrationForm() {
   const [errors, setErrors] = useState({});
   const [step, setStep] = useState(1);
   const [paymentOption, setPaymentOption] = useState("");
-  const [customAmount, setCustomAmount] = useState(""); // 🆕 for other payment
+  const [customAmount, setCustomAmount] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [termsError, setTermsError] = useState("");
   const [studentInfo, setStudentInfo] = useState(null);
 
-  // ✅ Load Razorpay SDK dynamically
+  // ✅ Load Razorpay SDK once
   useEffect(() => {
     if (!window.Razorpay) {
       const script = document.createElement("script");
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.async = true;
-      script.onload = () => console.log("✅ Razorpay SDK loaded successfully");
-      script.onerror = () => alert("❌ Failed to load Razorpay SDK. Check your internet connection.");
       document.body.appendChild(script);
     }
   }, []);
 
-  // ✅ Load student data and selected course from localStorage
+  // ✅ Load student info + selected course from localStorage
   useEffect(() => {
     const savedStudent = localStorage.getItem("studentInfo");
     const selectedCourse = localStorage.getItem("selectedCourse");
 
-    // ⚠️ If no student data found, redirect back to registration
     if (!savedStudent) {
       alert("Please complete the registration form first!");
       router.push("/registrationform");
@@ -46,16 +43,13 @@ export default function CourseRegistrationForm() {
     const student = JSON.parse(savedStudent);
     setStudentInfo(student);
 
-    // ✅ Always prefer the course from student info (first priority)
+    // ✅ Use student.course first, fallback to selectedCourse
     const courseFromStudent = student?.course || selectedCourse || "";
     setCourse(courseFromStudent);
 
-    // 🧩 Keep both synced in localStorage (optional but safe)
+    // keep both synced
     localStorage.setItem("selectedCourse", courseFromStudent);
   }, [router]);
-
-
-
 
   // 💰 Course pricing (fixed)
   const coursePricing = {
@@ -134,9 +128,10 @@ export default function CourseRegistrationForm() {
     else if (paymentOption === "Installment 2") amount = selectedPricing?.inst2 || 2500;
     else if (paymentOption === "Other") {
       const entered = parseInt(customAmount);
-      if (isNaN(entered) || entered <= 0) return alert("Please enter a valid amount!");
-      if (entered <= 500) return alert("⚠️ Amount must be greater than ₹500 (Registration Fee).");
-      if (entered > 5000) return alert("⚠️ Amount cannot exceed ₹5000.");
+      if (isNaN(entered) || entered <= 500)
+        return alert("⚠️ Custom amount must be greater than ₹500 (Registration Fee).");
+      if (entered > 5000)
+        return alert("⚠️ Custom amount cannot exceed ₹5000 (Full Payment).");
       amount = entered;
     }
 
@@ -184,11 +179,6 @@ export default function CourseRegistrationForm() {
         },
       };
 
-      if (!window.Razorpay) {
-        alert("Razorpay SDK not loaded yet! Please wait and try again.");
-        return;
-      }
-
       const rzp = new window.Razorpay(options);
       rzp.on("payment.failed", (response) => {
         console.error("Payment Failed:", response.error);
@@ -202,16 +192,16 @@ export default function CourseRegistrationForm() {
     }
   };
 
-  // ✅ Payment Options (added Other)
+  // ✅ Payment options (with custom)
   const getPaymentOptions = () =>
     selectedPricing
       ? [
-        { label: "Registration Fee", price: "₹500" },
-        { label: "Full Payment", price: `₹${selectedPricing.full}` },
-        { label: "Installment 1", price: `₹${selectedPricing.inst1}` },
-        { label: "Installment 2", price: `₹${selectedPricing.inst2}` },
-        { label: "Other", price: "Custom" },
-      ]
+          { label: "Registration Fee", price: "₹500" },
+          { label: "Full Payment", price: `₹${selectedPricing.full}` },
+          { label: "Installment 1", price: `₹${selectedPricing.inst1}` },
+          { label: "Installment 2", price: `₹${selectedPricing.inst2}` },
+          { label: "Other", price: "Custom" },
+        ]
       : [{ label: "Registration Fee", price: "₹500" }];
 
   return (
@@ -221,7 +211,9 @@ export default function CourseRegistrationForm() {
           <h2 className="text-3xl font-semibold text-center mb-8">Course Registration</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block mb-1 font-medium">Preferred Course <span className="text-red-500">*</span></label>
+              <label className="block mb-1 font-medium">
+                Preferred Course <span className="text-red-500">*</span>
+              </label>
               <select
                 value={course}
                 onChange={(e) => setCourse(e.target.value)}
@@ -229,17 +221,24 @@ export default function CourseRegistrationForm() {
               >
                 <option value="">Select Course</option>
                 {Object.keys(coursePricing).map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
               {errors.course && <p className="text-red-500 text-sm">{errors.course}</p>}
             </div>
 
             <div>
-              <label className="block mb-1 font-medium">Mode <span className="text-red-500">*</span></label>
+              <label className="block mb-1 font-medium">
+                Mode <span className="text-red-500">*</span>
+              </label>
               <div className="flex flex-wrap gap-4 mt-2">
                 {["Online", "Offline", "Hybrid"].map((option) => (
-                  <label key={option} className="flex items-center gap-2 bg-[#000617] px-3 py-1 rounded-md border border-gray-600 text-sm sm:text-base">
+                  <label
+                    key={option}
+                    className="flex items-center gap-2 bg-[#000617] px-3 py-1 rounded-md border border-gray-600 text-sm sm:text-base"
+                  >
                     <input
                       type="radio"
                       name="mode"
@@ -251,12 +250,13 @@ export default function CourseRegistrationForm() {
                   </label>
                 ))}
               </div>
-
               {errors.mode && <p className="text-red-500 text-sm">{errors.mode}</p>}
             </div>
 
             <div>
-              <label className="block mb-1 font-medium">Batch <span className="text-red-500">*</span></label>
+              <label className="block mb-1 font-medium">
+                Batch <span className="text-red-500">*</span>
+              </label>
               <select
                 value={batch}
                 onChange={(e) => setBatch(e.target.value)}
@@ -271,7 +271,10 @@ export default function CourseRegistrationForm() {
               {errors.batch && <p className="text-red-500 text-sm">{errors.batch}</p>}
             </div>
 
-            <motion.button type="submit" className="w-full py-3 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-600">
+            <motion.button
+              type="submit"
+              className="w-full py-3 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-600"
+            >
               Continue to Payment
             </motion.button>
           </form>
@@ -280,14 +283,30 @@ export default function CourseRegistrationForm() {
 
       {step === 2 && (
         <motion.div className="max-w-2xl w-full bg-[#011c4f] p-8 rounded-xl shadow-lg">
-          <h2 className="text-3xl font-semibold text-center mb-6 text-white">Course Payment</h2>
+          <h2 className="text-3xl font-semibold text-center mb-6 text-white">
+            Course Payment
+          </h2>
 
           <div className="mb-6 space-y-1">
-            <p><span className="text-yellow-400 font-semibold">Student:</span> {studentInfo?.name}</p>
-            <p><span className="text-yellow-400 font-semibold">Email:</span> {studentInfo?.email}</p>
-            <p><span className="text-yellow-400 font-semibold">Course:</span> {course}</p>
-            <p><span className="text-yellow-400 font-semibold">Mode:</span> {mode}</p>
-            <p><span className="text-yellow-400 font-semibold">Batch:</span> {batch}</p>
+            <p>
+              <span className="text-yellow-400 font-semibold">Student:</span>{" "}
+              {studentInfo?.name}
+            </p>
+            <p>
+              <span className="text-yellow-400 font-semibold">Email:</span>{" "}
+              {studentInfo?.email}
+            </p>
+            <p>
+              <span className="text-yellow-400 font-semibold">Course:</span>{" "}
+              {course}
+            </p>
+            <p>
+              <span className="text-yellow-400 font-semibold">Mode:</span> {mode}
+            </p>
+            <p>
+              <span className="text-yellow-400 font-semibold">Batch:</span>{" "}
+              {batch}
+            </p>
           </div>
 
           <h3 className="text-xl font-medium mb-3">Select Payment Option</h3>
@@ -295,8 +314,11 @@ export default function CourseRegistrationForm() {
             {getPaymentOptions().map(({ label, price }) => (
               <label
                 key={label}
-                className={`border p-3 rounded-md text-center cursor-pointer ${paymentOption === label ? "bg-yellow-500 text-black font-semibold" : "bg-[#000617] border-gray-600"
-                  }`}
+                className={`border p-3 rounded-md text-center cursor-pointer ${
+                  paymentOption === label
+                    ? "bg-yellow-500 text-black font-semibold"
+                    : "bg-[#000617] border-gray-600"
+                }`}
                 onClick={() => setPaymentOption(label)}
               >
                 <p>{label}</p>
@@ -305,7 +327,7 @@ export default function CourseRegistrationForm() {
             ))}
           </div>
 
-          {/* 🆕 Custom amount input */}
+          {/* 🆕 Custom amount */}
           {paymentOption === "Other" && (
             <div className="mt-4">
               <input
@@ -320,10 +342,18 @@ export default function CourseRegistrationForm() {
           )}
 
           <div className="flex items-center gap-2 mt-6">
-            <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={agreeTerms}
+              onChange={(e) => setAgreeTerms(e.target.checked)}
+            />
             <label className="text-sm">
               I agree to the{" "}
-              <Link href="/paymenttermconditions" target="_blank" className="text-yellow-400 underline">
+              <Link
+                href="/paymenttermconditions"
+                target="_blank"
+                className="text-yellow-400 underline"
+              >
                 Terms & Conditions
               </Link>
             </label>
@@ -331,8 +361,16 @@ export default function CourseRegistrationForm() {
           {termsError && <p className="text-red-500 text-sm">{termsError}</p>}
 
           <div className="flex justify-between mt-6">
-            <button onClick={() => setStep(1)} className="w-1/2 py-3 bg-gray-600 rounded-lg">Back</button>
-            <button onClick={handlePaymentContinue} className="w-1/2 py-3 bg-yellow-500 text-black font-semibold rounded-lg">
+            <button
+              onClick={() => setStep(1)}
+              className="w-1/2 py-3 bg-gray-600 rounded-lg"
+            >
+              Back
+            </button>
+            <button
+              onClick={handlePaymentContinue}
+              className="w-1/2 py-3 bg-yellow-500 text-black font-semibold rounded-lg"
+            >
               Continue
             </button>
           </div>
