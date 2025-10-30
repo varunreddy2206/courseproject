@@ -14,11 +14,12 @@ export default function CourseRegistrationForm() {
   const [errors, setErrors] = useState({});
   const [step, setStep] = useState(1);
   const [paymentOption, setPaymentOption] = useState("");
+  const [customAmount, setCustomAmount] = useState(""); // 🆕 for other payment
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [termsError, setTermsError] = useState("");
   const [studentInfo, setStudentInfo] = useState(null);
 
-  // ✅ Load Razorpay SDK dynamically and confirm it's ready
+  // ✅ Load Razorpay SDK dynamically
   useEffect(() => {
     if (!window.Razorpay) {
       const script = document.createElement("script");
@@ -30,52 +31,44 @@ export default function CourseRegistrationForm() {
     }
   }, []);
 
-
   // ✅ Load student data and selected course from localStorage
   useEffect(() => {
-    const savedStudent = localStorage.getItem("studentInfo");
-    const selectedCourse = localStorage.getItem("selectedCourse");
+  const savedStudent = localStorage.getItem("studentInfo");
+  const selectedCourse = localStorage.getItem("selectedCourse");
 
-    if (!savedStudent) {
-      alert("Please complete the student registration form first!");
-      router.push("/registrationform");
-      return;
-    }
+  if (!savedStudent) {
+    alert("Please complete the student registration form first!");
+    router.push("/registrationform");
+    return;
+  }
 
-    const student = JSON.parse(savedStudent);
-    setStudentInfo(student);
+  const student = JSON.parse(savedStudent);
+  setStudentInfo(student);
 
-    // ✅ Priority: use the course from registration form
-    if (student.course) {
-      setCourse(student.course);
-    } else if (selectedCourse) {
-      setCourse(selectedCourse);
-    }
-  }, [router]);
+  // ✅ Priority: use the course chosen in registration form first
+  if (student.course) {
+    setCourse(student.course);
+  } else if (selectedCourse) {
+    setCourse(selectedCourse);
+  }
+}, [router]);
 
-  // 💰 Course pricing
+
+
+  // 💰 Course pricing (fixed)
   const coursePricing = {
-    "Artificial Intelligence & Machine Learning with Python": { full: 6000, inst1: 3000, inst2: 3000 },
-    "Data Science & Analytics with Python": { full: 6500, inst1: 3250, inst2: 3250 },
-    "Python for Development & Automation": { full: 6200, inst1: 3100, inst2: 3100 },
-    "Full Stack Web Development (MERN / MEAN)": { full: 7000, inst1: 3500, inst2: 3500 },
-    "Full Stack Java Development (Spring Boot + React / Angular)": { full: 7200, inst1: 3600, inst2: 3600 },
-    "Full Stack Python Development (Django / Flask + React)": { full: 7100, inst1: 3550, inst2: 3550 },
+    "Artificial Intelligence & Machine Learning with Python": { full: 5000, inst1: 2500, inst2: 2500 },
+    "Data Science & Analytics with Python": { full: 5000, inst1: 2500, inst2: 2500 },
+    "Python for Development & Automation": { full: 5000, inst1: 2500, inst2: 2500 },
+    "Full Stack Web Development (MERN / MEAN)": { full: 5000, inst1: 2500, inst2: 2500 },
+    "Full Stack Java Development (Spring Boot + React / Angular)": { full: 5000, inst1: 2500, inst2: 2500 },
+    "Full Stack Python Development (Django / Flask + React)": { full: 5000, inst1: 2500, inst2: 2500 },
     "Frontend Development (HTML, CSS, JavaScript, React)": { full: 5000, inst1: 2500, inst2: 2500 },
-    "Backend Development (Node.js, Express, MongoDB / MySQL)": { full: 5500, inst1: 2750, inst2: 2750 },
-    "Flutter App Development": { full: 6000, inst1: 3000, inst2: 3000 },
-    "React Native App Development": { full: 6200, inst1: 3100, inst2: 3100 },
-    "Swift App Development (iOS)": { full: 6500, inst1: 3250, inst2: 3250 },
-    "Kotlin App Development (Android)": { full: 6500, inst1: 3250, inst2: 3250 },
-    "DevOps Engineer Program": { full: 7500, inst1: 3750, inst2: 3750 },
-    "Cloud Computing Fundamentals": { full: 6800, inst1: 3400, inst2: 3400 },
-    "Docker, Kubernetes & CI/CD Tools": { full: 7000, inst1: 3500, inst2: 3500 },
-    "Manual & Automation Testing": { full: 5500, inst1: 2750, inst2: 2750 },
-    "Selenium & API Testing (Advanced QA)": { full: 6000, inst1: 3000, inst2: 3000 },
+    "Backend Development (Node.js, Express, MongoDB / MySQL)": { full: 5000, inst1: 2500, inst2: 2500 },
+    "Flutter App Development": { full: 5000, inst1: 2500, inst2: 2500 },
+    "React Native App Development": { full: 5000, inst1: 2500, inst2: 2500 },
     "UI/UX Design Fundamentals (Figma & Adobe XD)": { full: 5000, inst1: 2500, inst2: 2500 },
-    "Graphic Design (Photoshop, Illustrator, Canva Pro)": { full: 5200, inst1: 2600, inst2: 2600 },
-    "Real-Time Project Internship (Web/App/AI)": { full: 4000, inst1: 2000, inst2: 2000 },
-    "Corporate Upskilling (Custom Modules)": { full: 4500, inst1: 2250, inst2: 2250 },
+    "Graphic Design (Photoshop, Illustrator, Canva Pro)": { full: 5000, inst1: 2500, inst2: 2500 },
   };
 
   const selectedPricing = useMemo(() => course && coursePricing[course], [course]);
@@ -83,8 +76,6 @@ export default function CourseRegistrationForm() {
   // ✅ Step 1: Register course
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // 🔒 Prevent multiple submissions
     if (handleSubmit.submitting) return;
     handleSubmit.submitting = true;
 
@@ -114,20 +105,16 @@ export default function CourseRegistrationForm() {
         if (res.ok) {
           console.log("✅ Course registration saved successfully!");
           setStep(2);
-        } else {
-          console.error("❌ Failed to save course registration");
-        }
+        } else console.error("❌ Failed to save course registration");
       } catch (err) {
         console.error("❌ Error saving course registration:", err);
       }
     }
 
-    // ✅ Allow another submission after 2 seconds
     setTimeout(() => {
       handleSubmit.submitting = false;
     }, 2000);
   };
-
 
   // ✅ Step 2: Razorpay Payment
   const handlePaymentContinue = async () => {
@@ -138,11 +125,18 @@ export default function CourseRegistrationForm() {
     }
 
     let amount = 0;
-    if (paymentOption === "Registration Fee") amount = 10;
-    else if (paymentOption === "Full Payment") amount = selectedPricing?.full || 0;
-    else if (paymentOption === "Installment 1") amount = selectedPricing?.inst1 || 0;
-    else if (paymentOption === "Installment 2") amount = selectedPricing?.inst2 || 0;
 
+    if (paymentOption === "Registration Fee") amount = 500;
+    else if (paymentOption === "Full Payment") amount = selectedPricing?.full || 5000;
+    else if (paymentOption === "Installment 1") amount = selectedPricing?.inst1 || 2500;
+    else if (paymentOption === "Installment 2") amount = selectedPricing?.inst2 || 2500;
+    else if (paymentOption === "Other") {
+      const entered = parseInt(customAmount);
+      if (isNaN(entered) || entered <= 0) return alert("Please enter a valid amount!");
+      if (entered <= 500) return alert("⚠️ Amount must be greater than ₹500 (Registration Fee).");
+      if (entered > 5000) return alert("⚠️ Amount cannot exceed ₹5000.");
+      amount = entered;
+    }
 
     try {
       const orderRes = await fetch("http://127.0.0.1:5000/api/create-order", {
@@ -150,12 +144,9 @@ export default function CourseRegistrationForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount }),
       });
-      const orderData = await orderRes.json();
 
-      if (!orderData.id) {
-        alert("Error creating payment order!");
-        return;
-      }
+      const orderData = await orderRes.json();
+      if (!orderData.id) return alert("Error creating payment order!");
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -167,12 +158,11 @@ export default function CourseRegistrationForm() {
         prefill: {
           name: studentInfo?.name,
           email: studentInfo?.email,
-          contact: studentInfo?.contact
+          contact: studentInfo?.contact,
         },
         theme: { color: "#FACC15" },
-        handler: async function (response) {
+        handler: async (response) => {
           alert("✅ Payment Successful!");
-
           await fetch("http://127.0.0.1:5000/api/payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -188,43 +178,39 @@ export default function CourseRegistrationForm() {
               paymentId: response.razorpay_payment_id,
             }),
           });
-
           router.push("/success");
         },
       };
 
-      // ✅ Make sure Razorpay SDK is loaded
       if (!window.Razorpay) {
-        alert("Razorpay SDK not loaded yet! Please wait a few seconds and try again.");
+        alert("Razorpay SDK not loaded yet! Please wait and try again.");
         return;
       }
 
       const rzp = new window.Razorpay(options);
-
-      // ✅ Handle payment failure gracefully
-      rzp.on("payment.failed", function (response) {
-        console.error(" Payment Failed:", response.error);
-        alert("Oops! Something went wrong.\n" + response.error.description);
+      rzp.on("payment.failed", (response) => {
+        console.error("Payment Failed:", response.error);
+        alert("❌ Payment failed! " + response.error.description);
       });
 
-      // ✅ Open Razorpay checkout
       rzp.open();
-
     } catch (err) {
-      console.error(" Payment Error:", err);
+      console.error("Payment Error:", err);
       alert("Payment initiation failed! Please try again.");
     }
   };
 
+  // ✅ Payment Options (added Other)
   const getPaymentOptions = () =>
     selectedPricing
       ? [
-        { label: "Registration Fee", price: "₹10" },
+        { label: "Registration Fee", price: "₹500" },
         { label: "Full Payment", price: `₹${selectedPricing.full}` },
         { label: "Installment 1", price: `₹${selectedPricing.inst1}` },
         { label: "Installment 2", price: `₹${selectedPricing.inst2}` },
+        { label: "Other", price: "Custom" },
       ]
-      : [{ label: "Registration Fee", price: "₹10" }];
+      : [{ label: "Registration Fee", price: "₹500" }];
 
   return (
     <section className="min-h-screen bg-gradient-to-b from-[#000617] to-[#011c4f] text-white py-20 px-6 sm:px-10 lg:px-24 flex items-center justify-center overflow-hidden">
@@ -233,9 +219,7 @@ export default function CourseRegistrationForm() {
           <h2 className="text-3xl font-semibold text-center mb-8">Course Registration</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block mb-1 font-medium">
-                Preferred Course <span className="text-red-500">*</span>
-              </label>
+              <label className="block mb-1 font-medium">Preferred Course <span className="text-red-500">*</span></label>
               <select
                 value={course}
                 onChange={(e) => setCourse(e.target.value)}
@@ -243,28 +227,18 @@ export default function CourseRegistrationForm() {
               >
                 <option value="">Select Course</option>
                 {Object.keys(coursePricing).map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
               {errors.course && <p className="text-red-500 text-sm">{errors.course}</p>}
             </div>
 
             <div>
-              <label className="block mb-1 font-medium">
-                Mode <span className="text-red-500">*</span>
-              </label>
+              <label className="block mb-1 font-medium">Mode <span className="text-red-500">*</span></label>
               <div className="flex gap-6 mt-2">
                 {["Online", "Offline", "Hybrid"].map((option) => (
                   <label key={option} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="mode"
-                      value={option}
-                      checked={mode === option}
-                      onChange={(e) => setMode(e.target.value)}
-                    />
+                    <input type="radio" name="mode" value={option} checked={mode === option} onChange={(e) => setMode(e.target.value)} />
                     {option}
                   </label>
                 ))}
@@ -273,9 +247,7 @@ export default function CourseRegistrationForm() {
             </div>
 
             <div>
-              <label className="block mb-1 font-medium">
-                Batch <span className="text-red-500">*</span>
-              </label>
+              <label className="block mb-1 font-medium">Batch <span className="text-red-500">*</span></label>
               <select
                 value={batch}
                 onChange={(e) => setBatch(e.target.value)}
@@ -290,10 +262,7 @@ export default function CourseRegistrationForm() {
               {errors.batch && <p className="text-red-500 text-sm">{errors.batch}</p>}
             </div>
 
-            <motion.button
-              type="submit"
-              className="w-full py-3 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-600"
-            >
+            <motion.button type="submit" className="w-full py-3 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-600">
               Continue to Payment
             </motion.button>
           </form>
@@ -313,7 +282,7 @@ export default function CourseRegistrationForm() {
           </div>
 
           <h3 className="text-xl font-medium mb-3">Select Payment Option</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {getPaymentOptions().map(({ label, price }) => (
               <label
                 key={label}
@@ -327,6 +296,20 @@ export default function CourseRegistrationForm() {
             ))}
           </div>
 
+          {/* 🆕 Custom amount input */}
+          {paymentOption === "Other" && (
+            <div className="mt-4">
+              <input
+                type="number"
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+                placeholder="Enter custom amount (₹)"
+                className="w-full px-4 py-2 rounded-md bg-[#000617] border border-gray-600 text-white"
+              />
+              <p className="text-xs text-gray-400 mt-1">Min ₹500 — Max ₹5000</p>
+            </div>
+          )}
+
           <div className="flex items-center gap-2 mt-6">
             <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} />
             <label className="text-sm">
@@ -339,14 +322,9 @@ export default function CourseRegistrationForm() {
           {termsError && <p className="text-red-500 text-sm">{termsError}</p>}
 
           <div className="flex justify-between mt-6">
-            <button onClick={() => setStep(1)} className="w-1/2 py-3 bg-gray-600 rounded-lg">
-              Back
-            </button>
-            <button
-              onClick={handlePaymentContinue}
-              className="w-1/2 py-3 bg-yellow-500 text-black font-semibold rounded-lg"
-            >
-              continue
+            <button onClick={() => setStep(1)} className="w-1/2 py-3 bg-gray-600 rounded-lg">Back</button>
+            <button onClick={handlePaymentContinue} className="w-1/2 py-3 bg-yellow-500 text-black font-semibold rounded-lg">
+              Continue
             </button>
           </div>
         </motion.div>
